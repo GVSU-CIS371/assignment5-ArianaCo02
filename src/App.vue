@@ -1,172 +1,84 @@
 <template>
   <div>
-    <Beverage :isIced="beverageStore.currentTemp === 'Cold'" />
+    <h1>Custom Drink Maker</h1>
 
-    <ul>
-      <li>
-        <template v-for="temp in beverageStore.temps" :key="temp">
-          <label>
-            <input
-              type="radio"
-              name="temperature"
-              :id="`r${temp}`"
-              :value="temp"
-              v-model="beverageStore.currentTemp"
-            />
-            {{ temp }}
-          </label>
-        </template>
-      </li>
-    </ul>
 
-    <ul>
-      <li>
-        <template v-for="b in beverageStore.bases" :key="b.id">
-          <label>
-            <input
-              type="radio"
-              name="bases"
-              :id="`r${b.id}`"
-              :value="b"
-              v-model="beverageStore.currentBase"
-            />
-            {{ b.name }}
-          </label>
-        </template>
-      </li>
-    </ul>
+    <div>
+      <label>Base:</label>
+      <select v-model="store.currentBase">
+        <option v-for="b in store.bases" :key="b.id" :value="b">{{ b.name }}</option>
+      </select>
 
-    <ul>
-      <li>
-        <template v-for="s in beverageStore.syrups" :key="s.id">
-          <label>
-            <input
-              type="radio"
-              name="syrups"
-              :id="`r${s.id}`"
-              :value="s"
-              v-model="beverageStore.currentSyrup"
-            />
-            {{ s.name }}
-          </label>
-        </template>
-      </li>
-    </ul>
+      <label>Creamer:</label>
+      <select v-model="store.currentCreamer">
+        <option v-for="c in store.creamers" :key="c.id" :value="c">{{ c.name }}</option>
+      </select>
 
-    <ul>
-      <li>
-        <template v-for="c in beverageStore.creamers" :key="c.id">
-          <label>
-            <input
-              type="radio"
-              name="creamers"
-              :id="`r${c.id}`"
-              :value="c"
-              v-model="beverageStore.currentCreamer"
-            />
-            {{ c.name }}
-          </label>
-        </template>
-      </li>
-    </ul>
-
-    <div class="auth-row">
-      <button @click="withGoogle">Sign in with Google</button>
+      <label>Syrup:</label>
+      <select v-model="store.currentSyrup">
+        <option v-for="s in store.syrups" :key="s.id" :value="s">{{ s.name }}</option>
+      </select>
     </div>
-    <input
-      v-model="beverageStore.currentName"
-      type="text"
-      placeholder="Beverage Name"
-    />
 
-    <button @click="handleMakeBeverage">🍺 Make Beverage</button>
+    <!-- Make Beverage -->
+    <button @click="store.makeBeverage">Make Beverage</button>
 
-    <p v-if="message" class="status-message">
-      {{ message }}
-    </p>
-  </div>
+    <!-- Saved Beverages -->
+    <h2>Saved Beverages</h2>
+    <div id="beverage-container">
+      <div v-for="bev in store.beverages" :key="bev.id">
+        <input
+          type="radio"
+          :id="bev.id"
+          name="beverage"
+          :value="bev.id"
+          v-model="store.selectedBeverageId"
+          @change="store.showBeverage(bev.id)"
+        />
+        <label :for="bev.id">{{ bev.base.name }} + {{ bev.creamer.name }} + {{ bev.syrup.name }}</label>
+      </div>
+    </div>
 
-  <div style="margin-top: 20px">
-    <template v-for="beverage in beverageStore.beverages" :key="beverage.id">
-      <input
-        type="radio"
-        :id="beverage.id"
-        :value="beverage"
-        v-model="beverageStore.currentBeverage"
-        @change="beverageStore.showBeverage()"
-      />
-      <label :for="beverage.id">{{ beverage.name }}</label>
-    </template>
+    
+    <h2>Your Mug</h2>
+    <div
+      id="mug"
+      :style="{
+        width: '200px',
+        height: '200px',
+        border: '2px solid black',
+        borderRadius: '10px',
+        backgroundColor: store.currentBase?.color || 'white',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }"
+    >
+      <p>{{ store.currentBase?.name }}</p>
+      <p>{{ store.currentCreamer?.name }}</p>
+      <p>{{ store.currentSyrup?.name }}</p>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import Beverage from "./components/Beverage.vue";
+import { onMounted } from "vue";
 import { useBeverageStore } from "./stores/beverageStore";
 
-const beverageStore = useBeverageStore();
-beverageStore.init();
+const store = useBeverageStore();
 
-const message = ref("");
-
-const showMessage = (txt: string) => {
-  message.value = txt;
-  setTimeout(() => {
-    message.value = "";
-  }, 5000);
-};
-
-const withGoogle = async () => {};
-
-const handleMakeBeverage = () => {
-  const txt = beverageStore.makeBeverage();
-  showMessage(txt);
-};
+onMounted(() => {
+  store.init();  
+});
 </script>
 
-<style lang="scss">
-body,
-html {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  background-color: #6e4228;
-  background: linear-gradient(to bottom, #6e4228 0%, #956f5a 100%);
-}
 
-ul {
-  list-style: none;
+<style scoped>
+#beverage-container {
+  margin: 1rem 0;
 }
-
-.auth-row {
-  margin-top: 10px;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.user-label {
-  color: #ffffff;
-  font-size: 0.9rem;
-}
-
-.hint {
-  margin-top: 4px;
-  color: #ffffff;
-  font-size: 0.85rem;
-}
-
-.status-message {
-  margin-top: 8px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  background: #fff3cd;
-  border: 1px solid #ffeeba;
-  color: #856404;
-  font-size: 0.9rem;
+#beverage-container div {
+  margin-bottom: 0.5rem;
 }
 </style>
